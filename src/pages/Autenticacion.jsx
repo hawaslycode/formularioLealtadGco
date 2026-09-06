@@ -17,6 +17,7 @@ export const Autenticacion = ({ alAutenticar }) => {
 
   /**
    * Maneja el envío del formulario comunicándose con la API REST de Spring Boot.
+   * Intercepta el JWT en caso de inicio de sesión exitoso y lo almacena localmente.
    */
   const manejarEnvioAutenticacion = async (evento) => {
     evento.preventDefault();
@@ -42,18 +43,37 @@ export const Autenticacion = ({ alAutenticar }) => {
       });
 
       if (respuesta.ok) {
-        const datosUsuario = await respuesta.json();
+        // Obtenemos la respuesta del backend (puede ser el Usuario o el Mapa con el JWT)
+        const datosRespuesta = await respuesta.json();
+
+        // =================================================================
+        // NUEVA LÓGICA JWT: Solo guardamos el token si es Inicio de Sesión
+        // =================================================================
+        if (!esRegistro) {
+          localStorage.setItem("tokenAcceso", datosRespuesta.tokenAcceso);
+          localStorage.setItem("correoUsuario", datosRespuesta.usuario.correoElectronico);
+        }
+
         establecerMensajeAlerta({
           texto: esRegistro
-            ? "¡Cuenta creada con éxito! Bienvenido."
+            ? "¡Cuenta creada con éxito! Por favor, inicie sesión."
             : "¡Inicio de sesión exitoso!",
           tipo: "exito",
         });
 
         // Retraso intencional para permitir al usuario leer el mensaje de éxito
         setTimeout(() => {
-          alAutenticar({ correo: datosUsuario.correoElectronico });
-        }, 800);
+          if (esRegistro) {
+            // Si acaba de registrarse, lo pasamos al formulario de login
+            establecerEsRegistro(false);
+            establecerMensajeAlerta({ texto: "", tipo: "" });
+            establecerContrasena(""); // Limpiamos la contraseña por seguridad
+          } else {
+            // Si inició sesión, lo enviamos al sistema principal extrayendo el correo del objeto JSON anidado
+            alAutenticar({ correo: datosRespuesta.usuario.correoElectronico });
+          }
+        }, 1500);
+
       } else {
         const textoError = await respuesta.text();
 
