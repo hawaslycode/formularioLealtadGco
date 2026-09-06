@@ -1,20 +1,38 @@
 import { useState } from "react";
 import { Autenticacion } from "./pages/Autenticacion";
 import { RegistroLealtad } from "./pages/RegistroLealtad";
+import { RestablecerContrasena } from "./pages/RestablecerContrasena";
 
 /**
  * Componente raíz de la aplicación.
- * Gestiona el estado de la sesión y decide qué vista renderizar
- * dependiendo de si el usuario está autenticado o no.
+ * Actúa como Guardián de Sesión utilizando Inicialización Perezosa (Lazy Initialization)
+ * para maximizar el rendimiento y evitar renderizados en cascada.
+ * Gestiona además el enrutamiento manual para las vistas públicas de recuperación de claves.
  */
-export default function App() {
-  // Estado que almacena los datos del usuario activo (nulo si no ha iniciado sesión)
-  const [usuarioActual, establecerUsuarioActual] = useState(null);
+export const App = () => {
+  /**
+   * ESTADO GLOBAL DE USUARIO (Inicialización Perezosa)
+   * Pasamos una función anónima a useState. React ejecutará esta función
+   * de forma síncrona una única vez al instanciar el componente, interceptando
+   * las credenciales del Local Storage antes del primer renderizado.
+   */
+  const [usuarioActual, establecerUsuarioActual] = useState(() => {
+    const tokenGuardado = localStorage.getItem("tokenAcceso");
+    const correoGuardado = localStorage.getItem("correoUsuario");
+
+    // Si existen credenciales válidas, retornamos el objeto del usuario inmediatamente
+    if (tokenGuardado && correoGuardado) {
+      return { correo: correoGuardado };
+    }
+    
+    // Si no hay sesión, el estado inicia en null
+    return null;
+  });
 
   /**
-   * Función encargada de actualizar el estado de la aplicación
-   * una vez que el usuario se autentica correctamente en el backend.
-   * @param {Object} datosUsuario - Objeto con la información del usuario (ej. correo).
+   * Función inyectada al componente de Autenticación para elevar el estado al autenticarse.
+   * 
+   * @param {Object} datosUsuario - Objeto que contiene el correo del usuario validado.
    */
   const manejarAutenticacion = (datosUsuario) => {
     establecerUsuarioActual(datosUsuario);
@@ -22,32 +40,45 @@ export default function App() {
 
   /**
    * Maneja el cierre de sesión seguro del usuario.
-   * Elimina el rastro del token de seguridad criptográfico y reinicia el estado global
-   * para evitar accesos no autorizados mediante la persistencia del Local Storage.
+   * Destruye el rastro criptográfico en la bóveda del navegador y purga el estado global.
    */
   const manejarCierreSesion = () => {
-    // 1. Destruimos las credenciales y datos almacenados localmente
     localStorage.removeItem("tokenAcceso");
     localStorage.removeItem("correoUsuario");
-
-    // 2. Reiniciamos el estado del usuario en React para desmontar la vista privada
     establecerUsuarioActual(null);
-    
   };
 
+  // ====================================================================
+  // RENDERIZADO CONDICIONAL Y ENRUTAMIENTO DE VISTAS
+  // ====================================================================
+
+  // Detectamos si el usuario ingresó a través del enlace seguro enviado a su correo
+  const esRutaRecuperacion = window.location.pathname === "/restablecer-contrasena";
+
+  if (esRutaRecuperacion) {
+    return (
+      <main>
+        <RestablecerContrasena />
+      </main>
+    );
+  }
+
   return (
-    // Renderizado condicional:
-    // Si usuarioActual tiene datos, mostramos el formulario de lealtad.
-    // Si es nulo, mostramos la pantalla de inicio de sesión/registro.
-    <main className="aplicacionPrincipal">
+    <main>
+      {/* 
+        Si usuarioActual tiene datos (leídos del localStorage o por login reciente), 
+        renderiza el sistema. Si es null, bloquea la ruta y muestra el Login. 
+      */}
       {usuarioActual ? (
-        <RegistroLealtad
-          usuarioActual={usuarioActual}
-          alCerrarSesion={manejarCierreSesion}
+        <RegistroLealtad 
+          usuarioActual={usuarioActual} 
+          alCerrarSesion={manejarCierreSesion} 
         />
       ) : (
         <Autenticacion alAutenticar={manejarAutenticacion} />
       )}
     </main>
   );
-}
+};
+
+export default App;

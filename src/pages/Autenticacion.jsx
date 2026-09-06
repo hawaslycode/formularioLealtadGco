@@ -3,7 +3,7 @@ import "./Autenticacion.css";
 
 /**
  * Componente para el inicio de sesión y registro de usuarios nativo.
- * Incluye gestión de estados de carga (UX) para interacciones fluidas.
+ * Incluye gestión de estados de carga (UX), validaciones y flujo de recuperación de contraseña.
  */
 export const Autenticacion = ({ alAutenticar }) => {
   const [esRegistro, establecerEsRegistro] = useState(false);
@@ -11,9 +11,6 @@ export const Autenticacion = ({ alAutenticar }) => {
   const [contrasena, establecerContrasena] = useState("");
   const [aceptaTerminos, establecerAceptaTerminos] = useState(false);
 
-  // =================================================================
-  // NUEVO ESTADO: Controla el flujo visual de carga (UX)
-  // =================================================================
   const [estaCargando, establecerEstaCargando] = useState(false);
 
   const [mensajeAlerta, establecerMensajeAlerta] = useState({
@@ -22,15 +19,14 @@ export const Autenticacion = ({ alAutenticar }) => {
   });
 
   /**
-   * Maneja el envío del formulario comunicándose con la API REST.
+   * Maneja el envío del formulario comunicándose con la API REST de Spring Boot.
    */
   const manejarEnvioAutenticacion = async (evento) => {
     evento.preventDefault();
 
     if (!aceptaTerminos) {
       establecerMensajeAlerta({
-        texto:
-          "Debe aceptar los términos, condiciones y políticas de privacidad para continuar.",
+        texto: "Debe aceptar los términos, condiciones y la política de tratamiento de datos personales para continuar.",
         tipo: "error",
       });
       return;
@@ -40,9 +36,7 @@ export const Autenticacion = ({ alAutenticar }) => {
       ? "/api/autenticacion/registrar"
       : "/api/autenticacion/login";
 
-    // Iniciamos la experiencia de carga visual bloqueando el botón
     establecerEstaCargando(true);
-    // Limpiamos mensajes de alerta previos
     establecerMensajeAlerta({ texto: "", tipo: "" });
 
     try {
@@ -84,8 +78,7 @@ export const Autenticacion = ({ alAutenticar }) => {
 
         if (respuesta.status === 404 && !esRegistro) {
           establecerMensajeAlerta({
-            texto:
-              "El correo ingresado no se encuentra registrado en nuestra base de datos. ¿Desea crear una cuenta?",
+            texto: "El correo ingresado no se encuentra registrado en nuestra base de datos. ¿Desea crear una cuenta?",
             tipo: "sugerencia-registro",
           });
         } else {
@@ -101,8 +94,55 @@ export const Autenticacion = ({ alAutenticar }) => {
         tipo: "error",
       });
     } finally {
-      // Independientemente del resultado (éxito o error), detenemos la animación
-      // Ocurre al instante si el servidor responde rápido, o espera si hay latencia
+      establecerEstaCargando(false);
+    }
+  };
+
+  /**
+   * Maneja la solicitud de recuperación de contraseña comunicándose con Spring Boot.
+   * Valida la entrada y procesa el envío del correo electrónico con el token temporal.
+   */
+  const manejarRecuperacionContrasena = async () => {
+    if (!correoElectronico) {
+      establecerMensajeAlerta({
+        texto: "Por favor, ingrese su correo electrónico en el campo superior para recuperar su contraseña.",
+        tipo: "info",
+      });
+      return;
+    }
+
+    establecerEstaCargando(true);
+    establecerMensajeAlerta({ texto: "", tipo: "" });
+
+    try {
+      const respuesta = await fetch(
+        "http://localhost:8080/api/autenticacion/olvide-contrasena",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ correoElectronico }),
+        },
+      );
+
+      if (respuesta.ok) {
+        establecerMensajeAlerta({
+          texto: `Hemos enviado las instrucciones de recuperación al correo: ${correoElectronico}. Por favor, revise su bandeja de entrada.`,
+          tipo: "exito",
+        });
+      } else {
+        const textoErrorServidor = await respuesta.text();
+        establecerMensajeAlerta({
+          texto: textoErrorServidor || "Ocurrió un error al intentar procesar su solicitud de recuperación.",
+          tipo: "error",
+        });
+      }
+    } catch (excepcion) {
+      console.error("Error de conexión al recuperar contraseña:", excepcion);
+      establecerMensajeAlerta({
+        texto: "Error de conexión con el servidor backend en Spring Boot.",
+        tipo: "error",
+      });
+    } finally {
       establecerEstaCargando(false);
     }
   };
@@ -157,9 +197,7 @@ export const Autenticacion = ({ alAutenticar }) => {
               }
               placeholder="correo@ejemplo.com"
               required
-              disabled={
-                estaCargando
-              } /* Bloqueamos escritura durante la carga */
+              disabled={estaCargando}
             />
           </div>
 
@@ -172,11 +210,21 @@ export const Autenticacion = ({ alAutenticar }) => {
               onChange={(evento) => establecerContrasena(evento.target.value)}
               placeholder="********"
               required
-              disabled={
-                estaCargando
-              } /* Bloqueamos escritura durante la carga */
+              disabled={estaCargando}
             />
           </div>
+
+          {/* Enlace de recuperación de contraseña (Visible solo en Modo Login) */}
+          {!esRegistro && (
+            <div className="contenedor-recuperar-contrasena">
+              <span
+                className="enlace-recuperar"
+                onClick={manejarRecuperacionContrasena}
+              >
+                ¿Olvidó su contraseña?
+              </span>
+            </div>
+          )}
 
           <div className="grupo-checkbox">
             <label className="etiqueta-checkbox">
@@ -196,13 +244,10 @@ export const Autenticacion = ({ alAutenticar }) => {
             </label>
           </div>
 
-          {/* ================================================================= */}
-          {/* BOTÓN CON RENDERIZADO CONDICIONAL BASADO EN EL ESTADO DE CARGA  */}
-          {/* ================================================================= */}
           <button
             type="submit"
             className="boton-principal-auth"
-            disabled={estaCargando} /* Deshabilita clics múltiples */
+            disabled={estaCargando}
           >
             {estaCargando ? (
               <div className="contenedor-cargador">
