@@ -248,52 +248,59 @@ export const RegistroLealtad = ({ usuarioActual, alCerrarSesion }) => {
 
   /**
    * Maneja el envío del formulario hacia el backend.
-   * Intercepta los datos del estado local y les adjunta el correo de la sesión actual
-   * para mantener la integridad referencial en la base de datos.
+   * Recupera el JWT del almacenamiento local y lo inyecta en la cabecera
+   * de autorización (Authorization Header) para validar la petición.
    */
   const manejarEnvioFormulario = async (evento) => {
-    // Prevenimos la recarga por defecto de la página
     evento.preventDefault();
-
-    // Construimos un nuevo objeto clonando los datos del formulario
-    // y añadiendo el correo electrónico del usuario activo.
+    
+    // 1. Recuperamos el token de seguridad almacenado previamente
+    const tokenDeAcceso = localStorage.getItem('tokenAcceso');
+    
+    // 2. Preparamos la carga útil asegurando la integridad referencial
     const cargaUtilDeDatos = {
       ...datosFormulario,
-      correoElectronico: usuarioActual.correo,
+      correoElectronico: usuarioActual.correo
     };
 
     try {
-      const respuesta = await fetch(
-        "http://localhost:8080/api/lealtad/registrar",
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          // Enviamos la nueva carga útil que ahora sí incluye el correo
-          body: JSON.stringify(cargaUtilDeDatos),
+      const respuesta = await fetch('http://localhost:8080/api/lealtad/registrar', {
+        method: 'POST',
+        headers: { 
+          'Content-Type': 'application/json',
+          // ===============================================================
+          // LÓGICA JWT: Inyectamos el token bajo el esquema "Bearer"
+          // ===============================================================
+          'Authorization': `Bearer ${tokenDeAcceso}`
         },
-      );
+        body: JSON.stringify(cargaUtilDeDatos),
+      });
 
       if (respuesta.ok) {
         establecerMensajeAlerta({
-          texto:
-            "¡Información guardada y actualizada en el programa de fidelidad con éxito!",
-          tipo: "exito",
+          texto: '¡Información guardada y actualizada en el programa de fidelidad con éxito!',
+          tipo: 'exito'
         });
       } else {
-        const textoDeError = await respuesta.text();
-        establecerMensajeAlerta({
-          texto: textoDeError || "Ocurrió un error al procesar el registro.",
-          tipo: "error",
-        });
+        // Manejo de errores específicos (ej. Token expirado o inválido)
+        if (respuesta.status === 401 || respuesta.status === 403) {
+           establecerMensajeAlerta({
+             texto: 'Su sesión ha expirado o no tiene permisos. Por favor, inicie sesión nuevamente.',
+             tipo: 'error'
+           });
+        } else {
+           const textoDeError = await respuesta.text();
+           establecerMensajeAlerta({ 
+             texto: textoDeError || 'Ocurrió un error al procesar el registro.', 
+             tipo: 'error' 
+           });
+        }
       }
     } catch (excepcion) {
-      // Se utiliza la variable para imprimir el trazo del error en la consola
-      // Esto es sumamente útil para depurar problemas de comunicación frontend-backend
-      console.error("Fallo en la comunicación con la API:", excepcion);
-
+      console.error('Error enviando datos protegidos:', excepcion);
       establecerMensajeAlerta({
-        texto: "Error de conexión con el servidor backend en Spring Boot.",
-        tipo: "error",
+        texto: 'Error de conexión con el servidor backend en Spring Boot.',
+        tipo: 'error'
       });
     }
   };
