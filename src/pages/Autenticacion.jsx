@@ -3,21 +3,26 @@ import "./Autenticacion.css";
 
 /**
  * Componente para el inicio de sesión y registro de usuarios nativo.
- * Conectado de manera real al backend en Spring Boot y PostgreSQL mediante credenciales locales.
+ * Incluye gestión de estados de carga (UX) para interacciones fluidas.
  */
 export const Autenticacion = ({ alAutenticar }) => {
   const [esRegistro, establecerEsRegistro] = useState(false);
   const [correoElectronico, establecerCorreoElectronico] = useState("");
   const [contrasena, establecerContrasena] = useState("");
   const [aceptaTerminos, establecerAceptaTerminos] = useState(false);
+
+  // =================================================================
+  // NUEVO ESTADO: Controla el flujo visual de carga (UX)
+  // =================================================================
+  const [estaCargando, establecerEstaCargando] = useState(false);
+
   const [mensajeAlerta, establecerMensajeAlerta] = useState({
     texto: "",
     tipo: "",
   });
 
   /**
-   * Maneja el envío del formulario comunicándose con la API REST de Spring Boot.
-   * Intercepta el JWT en caso de inicio de sesión exitoso y lo almacena localmente.
+   * Maneja el envío del formulario comunicándose con la API REST.
    */
   const manejarEnvioAutenticacion = async (evento) => {
     evento.preventDefault();
@@ -35,6 +40,11 @@ export const Autenticacion = ({ alAutenticar }) => {
       ? "/api/autenticacion/registrar"
       : "/api/autenticacion/login";
 
+    // Iniciamos la experiencia de carga visual bloqueando el botón
+    establecerEstaCargando(true);
+    // Limpiamos mensajes de alerta previos
+    establecerMensajeAlerta({ texto: "", tipo: "" });
+
     try {
       const respuesta = await fetch(`http://localhost:8080${endpoint}`, {
         method: "POST",
@@ -43,15 +53,14 @@ export const Autenticacion = ({ alAutenticar }) => {
       });
 
       if (respuesta.ok) {
-        // Obtenemos la respuesta del backend (puede ser el Usuario o el Mapa con el JWT)
         const datosRespuesta = await respuesta.json();
 
-        // =================================================================
-        // NUEVA LÓGICA JWT: Solo guardamos el token si es Inicio de Sesión
-        // =================================================================
         if (!esRegistro) {
           localStorage.setItem("tokenAcceso", datosRespuesta.tokenAcceso);
-          localStorage.setItem("correoUsuario", datosRespuesta.usuario.correoElectronico);
+          localStorage.setItem(
+            "correoUsuario",
+            datosRespuesta.usuario.correoElectronico,
+          );
         }
 
         establecerMensajeAlerta({
@@ -61,23 +70,18 @@ export const Autenticacion = ({ alAutenticar }) => {
           tipo: "exito",
         });
 
-        // Retraso intencional para permitir al usuario leer el mensaje de éxito
         setTimeout(() => {
           if (esRegistro) {
-            // Si acaba de registrarse, lo pasamos al formulario de login
             establecerEsRegistro(false);
             establecerMensajeAlerta({ texto: "", tipo: "" });
-            establecerContrasena(""); // Limpiamos la contraseña por seguridad
+            establecerContrasena("");
           } else {
-            // Si inició sesión, lo enviamos al sistema principal extrayendo el correo del objeto JSON anidado
             alAutenticar({ correo: datosRespuesta.usuario.correoElectronico });
           }
         }, 1500);
-
       } else {
         const textoError = await respuesta.text();
 
-        // Intercepta error 404 para ofrecer el registro si el correo no existe
         if (respuesta.status === 404 && !esRegistro) {
           establecerMensajeAlerta({
             texto:
@@ -96,6 +100,10 @@ export const Autenticacion = ({ alAutenticar }) => {
         texto: "Error de conexión con el servidor backend en Spring Boot.",
         tipo: "error",
       });
+    } finally {
+      // Independientemente del resultado (éxito o error), detenemos la animación
+      // Ocurre al instante si el servidor responde rápido, o espera si hay latencia
+      establecerEstaCargando(false);
     }
   };
 
@@ -149,6 +157,9 @@ export const Autenticacion = ({ alAutenticar }) => {
               }
               placeholder="correo@ejemplo.com"
               required
+              disabled={
+                estaCargando
+              } /* Bloqueamos escritura durante la carga */
             />
           </div>
 
@@ -161,6 +172,9 @@ export const Autenticacion = ({ alAutenticar }) => {
               onChange={(evento) => establecerContrasena(evento.target.value)}
               placeholder="********"
               required
+              disabled={
+                estaCargando
+              } /* Bloqueamos escritura durante la carga */
             />
           </div>
 
@@ -173,6 +187,7 @@ export const Autenticacion = ({ alAutenticar }) => {
                   establecerAceptaTerminos(evento.target.checked)
                 }
                 required
+                disabled={estaCargando}
               />
               <span>
                 Acepto los términos, condiciones y la política de tratamiento de
@@ -181,8 +196,24 @@ export const Autenticacion = ({ alAutenticar }) => {
             </label>
           </div>
 
-          <button type="submit" className="boton-principal-auth">
-            {esRegistro ? "Registrarse" : "Ingresar"}
+          {/* ================================================================= */}
+          {/* BOTÓN CON RENDERIZADO CONDICIONAL BASADO EN EL ESTADO DE CARGA  */}
+          {/* ================================================================= */}
+          <button
+            type="submit"
+            className="boton-principal-auth"
+            disabled={estaCargando} /* Deshabilita clics múltiples */
+          >
+            {estaCargando ? (
+              <div className="contenedor-cargador">
+                <span className="cargador-giratorio"></span>
+                <span>Procesando...</span>
+              </div>
+            ) : esRegistro ? (
+              "Registrarse"
+            ) : (
+              "Ingresar"
+            )}
           </button>
         </form>
 
@@ -191,9 +222,9 @@ export const Autenticacion = ({ alAutenticar }) => {
             <p>
               ¿Ya tiene una cuenta?{" "}
               <span
-                onClick={() => establecerEsRegistro(false)}
+                onClick={() => !estaCargando && establecerEsRegistro(false)}
                 style={{
-                  cursor: "pointer",
+                  cursor: estaCargando ? "not-allowed" : "pointer",
                   color: "#002855",
                   fontWeight: "bold",
                 }}
@@ -205,9 +236,9 @@ export const Autenticacion = ({ alAutenticar }) => {
             <p>
               ¿No tiene cuenta registrada?{" "}
               <span
-                onClick={() => establecerEsRegistro(true)}
+                onClick={() => !estaCargando && establecerEsRegistro(true)}
                 style={{
-                  cursor: "pointer",
+                  cursor: estaCargando ? "not-allowed" : "pointer",
                   color: "#002855",
                   fontWeight: "bold",
                 }}

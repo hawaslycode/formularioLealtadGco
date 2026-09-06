@@ -55,6 +55,7 @@ export const RegistroLealtad = ({ usuarioActual, alCerrarSesion }) => {
   const [departamentoSeleccionadoId, establecerDepartamentoSeleccionadoId] = useState("");
   
   const [mensajeAlerta, establecerMensajeAlerta] = useState({ texto: "", tipo: "" });
+  const [estaCargando, establecerEstaCargando] = useState(false);
 
   /**
    * 1. EFECTO PRINCIPAL: Cargar catálogos iniciales y precargar los datos del usuario.

@@ -31,3 +31,46 @@ h5,
 h6 {
   font-family: var(--fuente-titulos);
 }
+
+/* =================================================================== */
+/* INDICADOR DE CARGA GLOBAL (SPINNER) PARA EXPERIENCIA DE USUARIO     */
+/* =================================================================== */
+
+.contenedor-cargador {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 10px; /* Separación entre el círculo giratorio y el texto */
+}
+
+/* Animación y diseño del círculo */
+.cargador-giratorio {
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255, 255, 255, 0.3); /* Borde semitransparente */
+  border-radius: 50%;
+  border-top-color: #ffffff; /* Borde superior sólido que genera el efecto visual */
+  animation: girar 1s cubic-bezier(0.55, 0.15, 0.45, 0.85) infinite;
+}
+
+/* Variante azul para botones de fondo claro (si los tienes) */
+.cargador-giratorio.oscuro {
+  border: 3px solid rgba(0, 40, 85, 0.2);
+  border-top-color: #002855;
+}
+
+/* Declaración de los fotogramas clave para la rotación infinita */
+@keyframes girar {
+  0% {
+    transform: rotate(0deg);
+  }
+  100% {
+    transform: rotate(360deg);
+  }
+}
+
+/* Efecto de desvanecimiento para botones deshabilitados mientras cargan */
+button:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
