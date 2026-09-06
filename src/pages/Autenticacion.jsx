@@ -3,13 +3,16 @@ import "./Autenticacion.css";
 
 /**
  * Componente para el inicio de sesión y registro de usuarios nativo.
- * Conectado de manera real al backend en Spring Boot y PostgreSQL mediante credenciales locales.
+ * Incluye gestión de estados de carga (UX), validaciones y flujo de recuperación de contraseña.
  */
 export const Autenticacion = ({ alAutenticar }) => {
   const [esRegistro, establecerEsRegistro] = useState(false);
   const [correoElectronico, establecerCorreoElectronico] = useState("");
   const [contrasena, establecerContrasena] = useState("");
   const [aceptaTerminos, establecerAceptaTerminos] = useState(false);
+
+  const [estaCargando, establecerEstaCargando] = useState(false);
+
   const [mensajeAlerta, establecerMensajeAlerta] = useState({
     texto: "",
     tipo: "",
@@ -23,8 +26,7 @@ export const Autenticacion = ({ alAutenticar }) => {
 
     if (!aceptaTerminos) {
       establecerMensajeAlerta({
-        texto:
-          "Debe aceptar los términos, condiciones y políticas de privacidad para continuar.",
+        texto: "Debe aceptar los términos, condiciones y la política de tratamiento de datos personales para continuar.",
         tipo: "error",
       });
       return;
@@ -34,6 +36,9 @@ export const Autenticacion = ({ alAutenticar }) => {
       ? "/api/autenticacion/registrar"
       : "/api/autenticacion/login";
 
+    establecerEstaCargando(true);
+    establecerMensajeAlerta({ texto: "", tipo: "" });
+
     try {
       const respuesta = await fetch(`http://localhost:8080${endpoint}`, {
         method: "POST",
@@ -42,26 +47,38 @@ export const Autenticacion = ({ alAutenticar }) => {
       });
 
       if (respuesta.ok) {
-        const datosUsuario = await respuesta.json();
+        const datosRespuesta = await respuesta.json();
+
+        if (!esRegistro) {
+          localStorage.setItem("tokenAcceso", datosRespuesta.tokenAcceso);
+          localStorage.setItem(
+            "correoUsuario",
+            datosRespuesta.usuario.correoElectronico,
+          );
+        }
+
         establecerMensajeAlerta({
           texto: esRegistro
-            ? "¡Cuenta creada con éxito! Bienvenido."
+            ? "¡Cuenta creada con éxito! Por favor, inicie sesión."
             : "¡Inicio de sesión exitoso!",
           tipo: "exito",
         });
 
-        // Retraso intencional para permitir al usuario leer el mensaje de éxito
         setTimeout(() => {
-          alAutenticar({ correo: datosUsuario.correoElectronico });
-        }, 800);
+          if (esRegistro) {
+            establecerEsRegistro(false);
+            establecerMensajeAlerta({ texto: "", tipo: "" });
+            establecerContrasena("");
+          } else {
+            alAutenticar({ correo: datosRespuesta.usuario.correoElectronico });
+          }
+        }, 1500);
       } else {
         const textoError = await respuesta.text();
 
-        // Intercepta error 404 para ofrecer el registro si el correo no existe
         if (respuesta.status === 404 && !esRegistro) {
           establecerMensajeAlerta({
-            texto:
-              "El correo ingresado no se encuentra registrado en nuestra base de datos. ¿Desea crear una cuenta?",
+            texto: "El correo ingresado no se encuentra registrado en nuestra base de datos. ¿Desea crear una cuenta?",
             tipo: "sugerencia-registro",
           });
         } else {
@@ -76,6 +93,57 @@ export const Autenticacion = ({ alAutenticar }) => {
         texto: "Error de conexión con el servidor backend en Spring Boot.",
         tipo: "error",
       });
+    } finally {
+      establecerEstaCargando(false);
+    }
+  };
+
+  /**
+   * Maneja la solicitud de recuperación de contraseña comunicándose con Spring Boot.
+   * Valida la entrada y procesa el envío del correo electrónico con el token temporal.
+   */
+  const manejarRecuperacionContrasena = async () => {
+    if (!correoElectronico) {
+      establecerMensajeAlerta({
+        texto: "Por favor, ingrese su correo electrónico en el campo superior para recuperar su contraseña.",
+        tipo: "info",
+      });
+      return;
+    }
+
+    establecerEstaCargando(true);
+    establecerMensajeAlerta({ texto: "", tipo: "" });
+
+    try {
+      const respuesta = await fetch(
+        "http://localhost:8080/api/autenticacion/olvide-contrasena",
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ correoElectronico }),
+        },
+      );
+
+      if (respuesta.ok) {
+        establecerMensajeAlerta({
+          texto: `Hemos enviado las instrucciones de recuperación al correo: ${correoElectronico}. Por favor, revise su bandeja de entrada.`,
+          tipo: "exito",
+        });
+      } else {
+        const textoErrorServidor = await respuesta.text();
+        establecerMensajeAlerta({
+          texto: textoErrorServidor || "Ocurrió un error al intentar procesar su solicitud de recuperación.",
+          tipo: "error",
+        });
+      }
+    } catch (excepcion) {
+      console.error("Error de conexión al recuperar contraseña:", excepcion);
+      establecerMensajeAlerta({
+        texto: "Error de conexión con el servidor backend en Spring Boot.",
+        tipo: "error",
+      });
+    } finally {
+      establecerEstaCargando(false);
     }
   };
 
@@ -129,6 +197,7 @@ export const Autenticacion = ({ alAutenticar }) => {
               }
               placeholder="correo@ejemplo.com"
               required
+              disabled={estaCargando}
             />
           </div>
 
@@ -141,8 +210,21 @@ export const Autenticacion = ({ alAutenticar }) => {
               onChange={(evento) => establecerContrasena(evento.target.value)}
               placeholder="********"
               required
+              disabled={estaCargando}
             />
           </div>
+
+          {/* Enlace de recuperación de contraseña (Visible solo en Modo Login) */}
+          {!esRegistro && (
+            <div className="contenedor-recuperar-contrasena">
+              <span
+                className="enlace-recuperar"
+                onClick={manejarRecuperacionContrasena}
+              >
+                ¿Olvidó su contraseña?
+              </span>
+            </div>
+          )}
 
           <div className="grupo-checkbox">
             <label className="etiqueta-checkbox">
@@ -153,6 +235,7 @@ export const Autenticacion = ({ alAutenticar }) => {
                   establecerAceptaTerminos(evento.target.checked)
                 }
                 required
+                disabled={estaCargando}
               />
               <span>
                 Acepto los términos, condiciones y la política de tratamiento de
@@ -161,8 +244,21 @@ export const Autenticacion = ({ alAutenticar }) => {
             </label>
           </div>
 
-          <button type="submit" className="boton-principal-auth">
-            {esRegistro ? "Registrarse" : "Ingresar"}
+          <button
+            type="submit"
+            className="boton-principal-auth"
+            disabled={estaCargando}
+          >
+            {estaCargando ? (
+              <div className="contenedor-cargador">
+                <span className="cargador-giratorio"></span>
+                <span>Procesando...</span>
+              </div>
+            ) : esRegistro ? (
+              "Registrarse"
+            ) : (
+              "Ingresar"
+            )}
           </button>
         </form>
 
@@ -171,9 +267,9 @@ export const Autenticacion = ({ alAutenticar }) => {
             <p>
               ¿Ya tiene una cuenta?{" "}
               <span
-                onClick={() => establecerEsRegistro(false)}
+                onClick={() => !estaCargando && establecerEsRegistro(false)}
                 style={{
-                  cursor: "pointer",
+                  cursor: estaCargando ? "not-allowed" : "pointer",
                   color: "#002855",
                   fontWeight: "bold",
                 }}
@@ -185,9 +281,9 @@ export const Autenticacion = ({ alAutenticar }) => {
             <p>
               ¿No tiene cuenta registrada?{" "}
               <span
-                onClick={() => establecerEsRegistro(true)}
+                onClick={() => !estaCargando && establecerEsRegistro(true)}
                 style={{
-                  cursor: "pointer",
+                  cursor: estaCargando ? "not-allowed" : "pointer",
                   color: "#002855",
                   fontWeight: "bold",
                 }}

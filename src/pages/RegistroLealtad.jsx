@@ -90,76 +90,100 @@ export const RegistroLealtad = ({ usuarioActual, alCerrarSesion }) => {
   const [paisSeleccionadoId, establecerPaisSeleccionadoId] = useState("");
   const [departamentoSeleccionadoId, establecerDepartamentoSeleccionadoId] =
     useState("");
+
   const [mensajeAlerta, establecerMensajeAlerta] = useState({
     texto: "",
     tipo: "",
   });
+  const [estaCargando, establecerEstaCargando] = useState(false);
 
-  // 1. Cargar catálogos iniciales y precargar los datos del usuario registrado
+  /**
+   * 1. EFECTO PRINCIPAL: Cargar catálogos iniciales y precargar los datos del usuario.
+   * Se ha inyectado el JWT en las cabeceras para sortear el Filtro de Seguridad.
+   */
   useEffect(() => {
     let estaMontado = true;
 
     const inicializarDatosVista = async () => {
+      // Recuperamos el token seguro guardado durante el inicio de sesión
+      const tokenDeAcceso = localStorage.getItem("tokenAcceso");
+
+      if (!tokenDeAcceso) {
+        console.warn("Acceso denegado: No se encontró un token de sesión.");
+        return;
+      }
+
+      // Preparamos la cabecera estándar para peticiones GET protegidas
+      const configuracionPeticion = {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${tokenDeAcceso}`,
+        },
+      };
+
       try {
-        // Carga de catálogos
+        // --- 1.1 Carga de Catálogos Seguros ---
         const resTipos = await fetch(
           "http://localhost:8080/api/catalogos/tipos-identificacion",
+          configuracionPeticion,
         );
         if (resTipos.ok && estaMontado)
           establecerListaTiposId(await resTipos.json());
 
         const resPaises = await fetch(
           "http://localhost:8080/api/catalogos/paises",
+          configuracionPeticion,
         );
         if (resPaises.ok && estaMontado)
           establecerListaPaises(await resPaises.json());
 
         const resMarcas = await fetch(
           "http://localhost:8080/api/catalogos/marcas",
+          configuracionPeticion,
         );
         if (resMarcas.ok && estaMontado)
           establecerListaMarcas(await resMarcas.json());
 
-        // Precarga de datos del cliente basado en el correo de la sesión activa
+        // --- 1.2 Precarga de Datos del Cliente ---
         if (usuarioActual?.correo) {
-          const respuestaCliente = await fetch(`http://localhost:8080/api/lealtad/cliente/correo/${usuarioActual.correo}`);
-          
+          const respuestaCliente = await fetch(
+            `http://localhost:8080/api/lealtad/cliente/correo/${usuarioActual.correo}`,
+            configuracionPeticion,
+          );
+
           if (respuestaCliente.ok && estaMontado) {
-            // Si el usuario ya existe en la tabla de lealtad, precargamos sus datos
             const datosCliente = await respuestaCliente.json();
             establecerDatosFormulario({
-              tipoIdentificacion: datosCliente.tipoIdentificacion || '',
-              numeroIdentificacion: datosCliente.numeroIdentificacion || '',
-              nombres: datosCliente.nombres || '',
-              apellidos: datosCliente.apellidos || '',
-              fechaNacimiento: datosCliente.fechaNacimiento || '',
-              direccion: datosCliente.direccion || '',
-              pais: datosCliente.pais || '',
-              departamento: datosCliente.departamento || '',
-              ciudad: datosCliente.ciudad || '',
-              idMarca: datosCliente.idMarca ? String(datosCliente.idMarca) : ''
-            });
-            
-            establecerMensajeAlerta({
-              texto: '¡Datos de lealtad precargados exitosamente desde la base de datos!',
-              tipo: 'exito'
+              tipoIdentificacion: datosCliente.tipoIdentificacion || "",
+              numeroIdentificacion: datosCliente.numeroIdentificacion || "",
+              nombres: datosCliente.nombres || "",
+              apellidos: datosCliente.apellidos || "",
+              fechaNacimiento: datosCliente.fechaNacimiento || "",
+              direccion: datosCliente.direccion || "",
+              pais: datosCliente.pais || "",
+              departamento: datosCliente.departamento || "",
+              ciudad: datosCliente.ciudad || "",
+              idMarca: datosCliente.idMarca ? String(datosCliente.idMarca) : "",
             });
 
-          } else if (respuestaCliente.status === 404 && estaMontado) {
-            // MANEJO ELEGANTE DEL 404: 
-            // Sabemos que es un usuario nuevo, así que no mostramos error,
-            // sino un mensaje de bienvenida invitándolo a llenar sus datos.
-            console.info("Info: Usuario nuevo, formulario en blanco listo para ser diligenciado.");
             establecerMensajeAlerta({
-              texto: '¡Bienvenido! Por favor, complete sus datos para registrarse en el programa de lealtad.',
-              tipo: 'info' // Asegúrate de darle estilos a este tipo 'info' en tu CSS si lo deseas
+              texto:
+                "¡Datos de lealtad precargados exitosamente desde la base de datos!",
+              tipo: "exito",
+            });
+          } else if (respuestaCliente.status === 404 && estaMontado) {
+            console.info("Info: Usuario nuevo, formulario en blanco.");
+            establecerMensajeAlerta({
+              texto:
+                "¡Bienvenido! Por favor, complete sus datos para registrarse en el programa de lealtad.",
+              tipo: "info",
             });
           }
         }
-      } catch {
-        if (estaMontado) {
-          console.error("Error al inicializar la vista de lealtad.");
-        }
+      } catch (error) {
+        if (estaMontado)
+          console.error("Error al inicializar la vista de lealtad:", error);
       }
     };
 
@@ -170,15 +194,24 @@ export const RegistroLealtad = ({ usuarioActual, alCerrarSesion }) => {
     };
   }, [usuarioActual]);
 
-  // 2. Sincronizar departamentos al cambiar el país
+  /**
+   * 2. EFECTO SECUNDARIO: Cargar departamentos dependientes del país.
+   * Se incluye inyección del JWT en la cabecera.
+   */
   useEffect(() => {
     let estaMontado = true;
     const cargarDepartamentos = async () => {
-      if (paisSeleccionadoId) {
+      const tokenDeAcceso = localStorage.getItem("tokenAcceso");
+      if (paisSeleccionadoId && tokenDeAcceso) {
         try {
           const respuesta = await fetch(
             `http://localhost:8080/api/catalogos/departamentos/${paisSeleccionadoId}`,
+            {
+              method: "GET",
+              headers: { Authorization: `Bearer ${tokenDeAcceso}` },
+            },
           );
+
           if (respuesta.ok && estaMontado) {
             establecerListaDepartamentos(await respuesta.json());
             const paisObj = listaPaises.find(
@@ -191,26 +224,37 @@ export const RegistroLealtad = ({ usuarioActual, alCerrarSesion }) => {
               }));
             }
           }
-        } catch {
-          if (estaMontado) console.error("Error al cargar departamentos.");
+        } catch (error) {
+          if (estaMontado)
+            console.error("Error al cargar departamentos:", error);
         }
       }
     };
+
     cargarDepartamentos();
     return () => {
       estaMontado = false;
     };
   }, [paisSeleccionadoId, listaPaises]);
 
-  // 3. Sincronizar ciudades al cambiar el departamento
+  /**
+   * 3. EFECTO TERCIARIO: Cargar ciudades dependientes del departamento.
+   * Se incluye inyección del JWT en la cabecera.
+   */
   useEffect(() => {
     let estaMontado = true;
     const cargarCiudades = async () => {
-      if (departamentoSeleccionadoId) {
+      const tokenDeAcceso = localStorage.getItem("tokenAcceso");
+      if (departamentoSeleccionadoId && tokenDeAcceso) {
         try {
           const respuesta = await fetch(
             `http://localhost:8080/api/catalogos/ciudades/${departamentoSeleccionadoId}`,
+            {
+              method: "GET",
+              headers: { Authorization: `Bearer ${tokenDeAcceso}` },
+            },
           );
+
           if (respuesta.ok && estaMontado) {
             establecerListaCiudades(await respuesta.json());
             const depObj = listaDepartamentos.find(
@@ -223,11 +267,12 @@ export const RegistroLealtad = ({ usuarioActual, alCerrarSesion }) => {
               }));
             }
           }
-        } catch {
-          if (estaMontado) console.error("Error al cargar ciudades.");
+        } catch (error) {
+          if (estaMontado) console.error("Error al cargar ciudades:", error);
         }
       }
     };
+
     cargarCiudades();
     return () => {
       estaMontado = false;
@@ -240,35 +285,39 @@ export const RegistroLealtad = ({ usuarioActual, alCerrarSesion }) => {
 
   const manejarCambio = (evento) => {
     const { name, value } = evento.target;
-    establecerDatosFormulario({
-      ...datosFormulario,
-      [name]: value,
-    });
+    establecerDatosFormulario({ ...datosFormulario, [name]: value });
   };
 
   /**
    * Maneja el envío del formulario hacia el backend.
-   * Intercepta los datos del estado local y les adjunta el correo de la sesión actual
-   * para mantener la integridad referencial en la base de datos.
+   * Valida el JWT y registra o actualiza al cliente.
+   */
+  /**
+   * Maneja el envío del formulario hacia el backend.
+   * Valida el JWT, registra o actualiza al cliente y gestiona el estado visual de carga.
    */
   const manejarEnvioFormulario = async (evento) => {
-    // Prevenimos la recarga por defecto de la página
     evento.preventDefault();
 
-    // Construimos un nuevo objeto clonando los datos del formulario
-    // y añadiendo el correo electrónico del usuario activo.
+    const tokenDeAcceso = localStorage.getItem("tokenAcceso");
     const cargaUtilDeDatos = {
       ...datosFormulario,
       correoElectronico: usuarioActual.correo,
     };
+
+    // Bloqueamos la interfaz y limpiamos alertas previas
+    establecerEstaCargando(true);
+    establecerMensajeAlerta({ texto: "", tipo: "" });
 
     try {
       const respuesta = await fetch(
         "http://localhost:8080/api/lealtad/registrar",
         {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          // Enviamos la nueva carga útil que ahora sí incluye el correo
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${tokenDeAcceso}`,
+          },
           body: JSON.stringify(cargaUtilDeDatos),
         },
       );
@@ -280,21 +329,29 @@ export const RegistroLealtad = ({ usuarioActual, alCerrarSesion }) => {
           tipo: "exito",
         });
       } else {
-        const textoDeError = await respuesta.text();
-        establecerMensajeAlerta({
-          texto: textoDeError || "Ocurrió un error al procesar el registro.",
-          tipo: "error",
-        });
+        if (respuesta.status === 401 || respuesta.status === 403) {
+          establecerMensajeAlerta({
+            texto:
+              "Su sesión ha expirado o no tiene permisos. Por favor, inicie sesión nuevamente.",
+            tipo: "error",
+          });
+        } else {
+          const textoDeError = await respuesta.text();
+          establecerMensajeAlerta({
+            texto: textoDeError || "Ocurrió un error al procesar el registro.",
+            tipo: "error",
+          });
+        }
       }
     } catch (excepcion) {
-      // Se utiliza la variable para imprimir el trazo del error en la consola
-      // Esto es sumamente útil para depurar problemas de comunicación frontend-backend
-      console.error("Fallo en la comunicación con la API:", excepcion);
-
+      console.error("Error enviando datos protegidos:", excepcion);
       establecerMensajeAlerta({
         texto: "Error de conexión con el servidor backend en Spring Boot.",
         tipo: "error",
       });
+    } finally {
+      // Liberamos el botón independientemente de si la petición tuvo éxito o falló
+      establecerEstaCargando(false);
     }
   };
 
@@ -383,7 +440,6 @@ export const RegistroLealtad = ({ usuarioActual, alCerrarSesion }) => {
               required
             />
           </div>
-
           <div className="grupo-input">
             <label htmlFor="apellidos">Apellidos</label>
             <input
@@ -410,7 +466,6 @@ export const RegistroLealtad = ({ usuarioActual, alCerrarSesion }) => {
               required
             />
           </div>
-
           <div className="grupo-input">
             <label htmlFor="direccion">Dirección</label>
             <input
@@ -425,7 +480,6 @@ export const RegistroLealtad = ({ usuarioActual, alCerrarSesion }) => {
           </div>
         </div>
 
-        {/* Listas desplegables geográficas en cascada */}
         <div className="fila-formulario">
           <div className="grupo-input">
             <label htmlFor="paisSeleccionado">País</label>
@@ -506,7 +560,6 @@ export const RegistroLealtad = ({ usuarioActual, alCerrarSesion }) => {
           </div>
         </div>
 
-        {/* Sección de Beneficios Exclusivos precargados según la marca */}
         {listaBeneficios.length > 0 && (
           <div className="contenedor-beneficios-marca">
             <h3 className="titulo-beneficios">
@@ -523,10 +576,22 @@ export const RegistroLealtad = ({ usuarioActual, alCerrarSesion }) => {
           </div>
         )}
 
-        {/* Botones inferiores de acción (Actualizar y Salir) */}
         <div className="contenedor-botones-inferiores">
-          <button type="submit" className="boton-registro">
-            Guardar y Actualizar Información
+          {/* Botón dinámico que responde al estado de carga */}
+          <button
+            type="submit"
+            className="boton-registro"
+            disabled={estaCargando}
+          >
+            {estaCargando ? (
+              <div className="contenedor-cargador">
+                {/* Reutilizamos nuestra clase CSS global del círculo giratorio */}
+                <span className="cargador-giratorio"></span>
+                <span>Procesando...</span>
+              </div>
+            ) : (
+              "Guardar y Actualizar Información"
+            )}
           </button>
           <button
             type="button"
