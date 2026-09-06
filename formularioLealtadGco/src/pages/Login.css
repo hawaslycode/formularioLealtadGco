@@ -1,0 +1,68 @@
+.contenedor-login {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  background-color: var(--color-gris-claro);
+}
+
+.formulario-login {
+  background-color: var(--color-blanco);
+  padding: 40px;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  width: 100%;
+  max-width: 400px;
+}
+
+.titulo-login {
+  font-family: var(--fuente-titulos);
+  color: var(--color-azul-oscuro);
+  text-transform: uppercase;
+  margin-bottom: 10px;
+  text-align: center;
+}
+
+.descripcion-login {
+  font-size: 14px;
+  color: #555;
+  text-align: center;
+  margin-bottom: 25px;
+}
+
+.grupo-input {
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+}
+
+.grupo-input label {
+  font-size: 14px;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.grupo-input input {
+  padding: 10px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  font-family: var(--fuente-textos);
+}
+
+.boton-ingresar {
+  width: 100%;
+  padding: 12px;
+  background-color: var(--color-azul-oscuro);
+  color: var(--color-blanco);
+  border: none;
+  border-radius: 4px;
+  font-family: var(--fuente-titulos);
+  font-weight: 600;
+  cursor: pointer;
+  text-transform: uppercase;
+  transition: background-color 0.3s ease;
+}
+
+.boton-ingresar:hover {
+  background-color: #122b5c;
+}
