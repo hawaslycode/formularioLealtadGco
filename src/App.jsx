@@ -21,11 +21,18 @@ export default function App() {
   };
 
   /**
-   * Función encargada de limpiar el estado de la sesión,
-   * retornando al usuario a la pantalla de inicio de sesión.
+   * Maneja el cierre de sesión seguro del usuario.
+   * Elimina el rastro del token de seguridad criptográfico y reinicia el estado global
+   * para evitar accesos no autorizados mediante la persistencia del Local Storage.
    */
   const manejarCierreSesion = () => {
+    // 1. Destruimos las credenciales y datos almacenados localmente
+    localStorage.removeItem("tokenAcceso");
+    localStorage.removeItem("correoUsuario");
+
+    // 2. Reiniciamos el estado del usuario en React para desmontar la vista privada
     establecerUsuarioActual(null);
+    
   };
 
   return (
