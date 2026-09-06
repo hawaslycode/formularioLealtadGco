@@ -1,9 +1,11 @@
 import { useState } from "react";
 import "./Autenticacion.css";
+// Importamos el logotipo corporativo desde la carpeta assets
+import logoGco from "../assets/gcologo.png";
 
 /**
  * Componente para el inicio de sesión y registro de usuarios nativo.
- * Incluye gestión de estados de carga (UX), validaciones y flujo de recuperación de contraseña.
+ * Incluye gestión de estados de carga (UX), validaciones y logotipo corporativo.
  */
 export const Autenticacion = ({ alAutenticar }) => {
   const [esRegistro, establecerEsRegistro] = useState(false);
@@ -26,7 +28,7 @@ export const Autenticacion = ({ alAutenticar }) => {
 
     if (!aceptaTerminos) {
       establecerMensajeAlerta({
-        texto: "Debe aceptar los términos, condiciones y la política de tratamiento de datos personales para continuar.",
+        texto: "Debe aceptar los términos, condiciones y laF política de tratamiento de datos personales para continuar.",
         tipo: "error",
       });
       return;
@@ -100,7 +102,6 @@ export const Autenticacion = ({ alAutenticar }) => {
 
   /**
    * Maneja la solicitud de recuperación de contraseña comunicándose con Spring Boot.
-   * Valida la entrada y procesa el envío del correo electrónico con el token temporal.
    */
   const manejarRecuperacionContrasena = async () => {
     if (!correoElectronico) {
@@ -150,6 +151,15 @@ export const Autenticacion = ({ alAutenticar }) => {
   return (
     <div className="contenedor-autenticacion">
       <div className="tarjeta-autenticacion">
+        {/* Contenedor del Logotipo Corporativo GCO */}
+        <div className="contenedor-logo-auth">
+          <img 
+            src={logoGco} 
+            alt="Logotipo GCO Programas de Lealtad" 
+            className="imagen-logo-auth" 
+          />
+        </div>
+
         <h2 className="titulo-autenticacion">
           {esRegistro ? "Crear Nueva Cuenta" : "Iniciar Sesión"}
         </h2>
@@ -214,7 +224,6 @@ export const Autenticacion = ({ alAutenticar }) => {
             />
           </div>
 
-          {/* Enlace de recuperación de contraseña (Visible solo en Modo Login) */}
           {!esRegistro && (
             <div className="contenedor-recuperar-contrasena">
               <span
