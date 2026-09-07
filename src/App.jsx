@@ -48,10 +48,6 @@ export const App = () => {
     establecerUsuarioActual(null);
   };
 
-  // ====================================================================
-  // RENDERIZADO CONDICIONAL Y ENRUTAMIENTO DE VISTAS
-  // ====================================================================
-
   // Detectamos si el usuario ingresó a través del enlace seguro enviado a su correo
   const esRutaRecuperacion = window.location.pathname === "/restablecer-contrasena";
 

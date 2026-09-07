@@ -1,7 +1,3 @@
-/* =================================================================== */
-/* CONTENEDOR PRINCIPAL Y CABECERA                                     */
-/* =================================================================== */
-
 .contenedor-registro {
   display: flex;
   justify-content: center;
@@ -72,10 +68,6 @@
   margin-bottom: 30px;
 }
 
-/* =================================================================== */
-/* CAMPOS DEL FORMULARIO                                               */
-/* =================================================================== */
-
 .fila-formulario {
   display: flex;
   gap: 20px;
@@ -118,15 +110,10 @@
   box-shadow: 0 0 0 3px rgba(10, 31, 68, 0.1);
 }
 
-
-/* =================================================================== */
-/* RECUPERACIÓN DE CONTRASEÑA                                          */
-/* =================================================================== */
-
 .contenedor-recuperar-contrasena {
   display: flex;
-  justify-content: flex-end; /* Alineamos el enlace a la derecha */
-  margin-top: -12px; /* Reducimos el espacio para acercarlo al campo de contraseña */
+  justify-content: flex-end;
+  margin-top: -12px;
   margin-bottom: 18px;
 }
 
@@ -140,17 +127,13 @@
 }
 
 .enlace-recuperar:hover {
-  color: var(--color-rojo-acento, #d32f2f); /* Brillo interactivo con tu color de acento */
+  color: var(--color-rojo-acento, #d32f2f);
   text-decoration: underline;
 }
 
 .enlace-recuperar:active {
   transform: scale(0.98);
 }
-
-/* =================================================================== */
-/* SECCIÓN DE BENEFICIOS DE MARCA                                      */
-/* =================================================================== */
 
 .contenedor-beneficios-marca {
   background-color: #f8fafc;
@@ -208,10 +191,6 @@
   line-height: 1.5;
 }
 
-/* =================================================================== */
-/* BOTONES DE ACCIÓN                                                   */
-/* =================================================================== */
-
 .contenedor-botones-inferiores {
   display: flex;
   flex-direction: column;
@@ -264,10 +243,6 @@
   background-color: var(--color-rojo-acento);
   color: var(--color-blanco);
 }
-
-/* =================================================================== */
-/* COMPONENTE DE ALERTAS MODERNAS (DISEÑO SOFT UI / UNIFICADO)         */
-/* =================================================================== */
 
 .aviso-alerta {
   display: flex;
@@ -332,10 +307,6 @@
   background-color: rgba(255, 255, 255, 0.9);
   transform: scale(1.08);
 }
-
-/* =================================================================== */
-/* DISEÑO RESPONSIVO (Adaptabilidad para móviles)                      */
-/* =================================================================== */
 
 @media (max-width: 768px) {
   .contenedor-registro {

@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import "./RegistroLealtad.css";
 
 /**
- * Objeto con los beneficios exclusivos simulados por cada marca del grupo GCO.
+ * Objeto con los beneficios exclusivos simulados por cada marca deGCO.
  */
 const beneficiosPorMarcaSimulados = {
   1: [
@@ -238,7 +238,7 @@ export const RegistroLealtad = ({ usuarioActual, alCerrarSesion }) => {
   }, [paisSeleccionadoId, listaPaises]);
 
   /**
-   * 3. EFECTO TERCIARIO: Cargar ciudades dependientes del departamento.
+   * 3. EFECTO TRES: Cargar ciudades dependientes del departamento.
    * Se incluye inyección del JWT en la cabecera.
    */
   useEffect(() => {
@@ -288,10 +288,6 @@ export const RegistroLealtad = ({ usuarioActual, alCerrarSesion }) => {
     establecerDatosFormulario({ ...datosFormulario, [name]: value });
   };
 
-  /**
-   * Maneja el envío del formulario hacia el backend.
-   * Valida el JWT y registra o actualiza al cliente.
-   */
   /**
    * Maneja el envío del formulario hacia el backend.
    * Valida el JWT, registra o actualiza al cliente y gestiona el estado visual de carga.
@@ -350,7 +346,7 @@ export const RegistroLealtad = ({ usuarioActual, alCerrarSesion }) => {
         tipo: "error",
       });
     } finally {
-      // Liberamos el botón independientemente de si la petición tuvo éxito o falló
+      // Liberamos el boton independientemente de si la peticiON FALLO O Siguio
       establecerEstaCargando(false);
     }
   };
@@ -585,7 +581,6 @@ export const RegistroLealtad = ({ usuarioActual, alCerrarSesion }) => {
           >
             {estaCargando ? (
               <div className="contenedor-cargador">
-                {/* Reutilizamos nuestra clase CSS global del círculo giratorio */}
                 <span className="cargador-giratorio"></span>
                 <span>Procesando...</span>
               </div>

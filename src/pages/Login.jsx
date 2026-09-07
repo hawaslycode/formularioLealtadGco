@@ -16,7 +16,6 @@ export const Login = ({ alIniciarSesion }) => {
    */
   const manejarEnvio = (evento) => {
     evento.preventDefault();
-    // Validación básica de ejemplo; aquí se conectaría con Spring Boot más adelante
     if (correoElectronico && contrasena) {
       alIniciarSesion(true);
     } else {

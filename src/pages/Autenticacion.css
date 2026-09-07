@@ -1,7 +1,3 @@
-/* =================================================================== */
-/* ESTILOS GENERALES DE AUTENTICACIÓN                                  */
-/* =================================================================== */
-
 .contenedor-autenticacion {
   display: flex;
   justify-content: center;
@@ -14,8 +10,8 @@
 .tarjeta-autenticacion {
   background-color: var(--color-blanco);
   padding: 40px;
-  border-radius: 12px; /* Esquinas un poco más redondeadas para armonizar */
-  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08); /* Sombra moderna */
+  border-radius: 12px;
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.08);
   width: 100%;
   max-width: 450px;
 }
@@ -36,9 +32,6 @@
   margin-bottom: 25px;
 }
 
-/* =================================================================== */
-/* ESTILOS PARA EL LOGOTIPO CORPORATIVO EN AUTENTICACIÓN               */
-/* =================================================================== */
 
 .contenedor-logo-auth {
   display: flex;
@@ -48,15 +41,11 @@
 }
 
 .imagen-logo-auth {
-  width: 120px; /* Ajusta el tamaño horizontal según prefieras */
+  width: 120px; 
   height: auto;
   object-fit: contain;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.08)); /* Sombra sutil para darle relieve */
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.08));
 }
-
-/* =================================================================== */
-/* FORMULARIOS Y ENTRADAS                                              */
-/* =================================================================== */
 
 .grupo-input {
   margin-bottom: 18px;
@@ -74,7 +63,7 @@
 .grupo-input input {
   padding: 12px 14px;
   border: 1px solid #ccc;
-  border-radius: 8px; /* Inputs redondeados para combinar con las alertas */
+  border-radius: 8px;
   font-family: var(--fuente-textos);
   font-size: 14px;
   transition:
@@ -108,10 +97,6 @@
   width: 16px;
   height: 16px;
 }
-
-/* =================================================================== */
-/* BOTONES Y ENLACES                                                   */
-/* =================================================================== */
 
 .boton-principal-auth {
   width: 100%;
@@ -154,10 +139,6 @@
   color: var(--color-rojo-acento);
 }
 
-/* =================================================================== */
-/* COMPONENTE DE ALERTAS MODERNAS (DISEÑO SOFT UI / UNIFICADO)         */
-/* =================================================================== */
-
 .aviso-alerta {
   display: flex;
   justify-content: space-between;
@@ -191,41 +172,30 @@
   border-color: #fecaca;
 }
 
-/* =================================================================== */
-/* VARIANTE: SUGERENCIA DE REGISTRO (Diseño en Columna)                */
-/* =================================================================== */
-
 .aviso-alerta.sugerencia-registro {
-  background-color: #e0f2fe; /* Azul pastel muy claro */
+  background-color: #e0f2fe;
   color: var(--color-azul-oscuro, #002855); 
   border-color: #bae6fd;
   
-  /* Sobrescribimos el comportamiento de fila por columna */
   flex-direction: column; 
   text-align: center; 
-  align-items: stretch; /* Estira el contenido a lo ancho */
-  gap: 15px; /* Separación perfecta entre el texto y el botón */
-  padding: 24px 20px; /* Un poco más de aire (padding) interior */
+  align-items: stretch;
+  gap: 15px;
+  padding: 24px 20px;
 }
 
-/* Mejoramos el interlineado del texto para mayor legibilidad */
 .aviso-alerta.sugerencia-registro span {
   line-height: 1.5;
   font-size: 0.95rem;
 }
-
-/* =================================================================== */
-/* BOTÓN DE ACCIÓN DENTRO DE LA SUGERENCIA                             */
-/* =================================================================== */
 
 .boton-accion-sugerencia {
   background-color: var(--color-azul-oscuro, #002855);
   color: #ffffff;
   border: none;
   border-radius: 8px; 
-  padding: 12px 16px; /* Botón ligeramente más alto */
+  padding: 12px 16px;
   
-  /* El botón ahora ocupa todo el ancho disponible dentro de la alerta */
   width: 100%; 
   margin-left: 0; 
   
@@ -234,18 +204,18 @@
   cursor: pointer;
   text-transform: uppercase;
   letter-spacing: 0.5px;
-  box-shadow: 0 4px 12px rgba(0, 40, 85, 0.15); /* Sombra sutil que le da profundidad */
+  box-shadow: 0 4px 12px rgba(0, 40, 85, 0.15);
   transition: background-color 0.3s ease, transform 0.1s ease, box-shadow 0.3s ease;
 }
 
 .boton-accion-sugerencia:hover {
   background-color: var(--color-rojo-acento, #d32f2f); 
-  transform: translateY(-2px); /* Se eleva un poco al pasar el mouse */
-  box-shadow: 0 6px 16px rgba(211, 47, 47, 0.2); /* La sombra cambia al color de acento */
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(211, 47, 47, 0.2);
 }
 
 .boton-accion-sugerencia:active {
-  transform: translateY(0); /* Efecto de clic realista */
+  transform: translateY(0);
 }
 
 .boton-cerrar-aviso {
