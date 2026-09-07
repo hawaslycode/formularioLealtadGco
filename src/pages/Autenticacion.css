@@ -32,6 +32,9 @@
   margin-bottom: 25px;
 }
 
+/* =================================================================== */
+/* ESTILOS PARA EL LOGOTIPO CORPORATIVO EN AUTENTICACIÓN               */
+/* =================================================================== */
 
 .contenedor-logo-auth {
   display: flex;
@@ -41,11 +44,15 @@
 }
 
 .imagen-logo-auth {
-  width: 120px; 
+  width: 120px; /* Ajusta el tamaño horizontal según prefieras */
   height: auto;
   object-fit: contain;
-  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.08));
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.08)); /* Sombra sutil para darle relieve */
 }
+
+/* =================================================================== */
+/* FORMULARIOS Y ENTRADAS                                              */
+/* =================================================================== */
 
 .grupo-input {
   margin-bottom: 18px;

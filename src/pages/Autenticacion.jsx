@@ -1,7 +1,12 @@
 import { useState } from "react";
 import "./Autenticacion.css";
+// Importamos el logotipo corporativo desde la carpeta assets
 import logoGco from "../assets/gcologo.png";
 
+/**
+ * Componente para el inicio de sesión y registro de usuarios nativo.
+ * Incluye gestión de estados de carga (UX), validaciones y logotipo corporativo.
+ */
 export const Autenticacion = ({ alAutenticar }) => {
   const [esRegistro, establecerEsRegistro] = useState(false);
   const [correoElectronico, establecerCorreoElectronico] = useState("");
@@ -93,6 +98,9 @@ export const Autenticacion = ({ alAutenticar }) => {
     }
   };
 
+  /**
+   * Maneja la solicitud de recuperación de contraseña comunicándose con Spring Boot.
+   */
   const manejarRecuperacionContrasena = async () => {
     if (!correoElectronico) {
       establecerMensajeAlerta({
